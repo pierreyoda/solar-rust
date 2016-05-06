@@ -12,3 +12,6 @@ name = "solar-rust"
 path = "src/bin/main.rs"
 
 [dependencies]
+piston_window = "0.45.0"
+piston2d-graphics = "0.16.0"
+piston2d-gfx_graphics = "0.27.0"
