@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::f64::consts::PI;
 
 /// The different models of 'Objects' supported.
 #[derive(Clone, Debug)]
@@ -18,7 +19,11 @@ pub trait Orbiting {
     /// otherwise return None.
     /// - 'elapsed' is the total elapsed time for the object since its creation,
     ///   in seconds.
-    fn compute(&self, elapsed: f64) -> Option<(f64, f64)>;
+    fn compute(&mut self, elapsed: f64) -> Option<(f64, f64)>;
+
+    /// If it makes sense, return the maximum altitude the orbiting entity can find
+    /// itself while orbiting over its origin point.
+    fn max_altitude(&self) -> Option<f64>;
 }
 
 #[derive(Clone, Debug)]
@@ -29,6 +34,8 @@ pub enum Orbit {
     Circular {
         altitude: f64,
         orbital_speed: f64,
+        /// Current angle of the orbit, in radians.
+        angle: f64,
         origin: Rc<RefCell<Object>>,
     },
     /// "Fixed" orbit : the object will never move from its initial position.
@@ -37,14 +44,21 @@ pub enum Orbit {
 }
 
 impl<'o> Orbiting for Orbit {
-    fn compute(&self, elapsed: f64) -> Option<(f64, f64)> {
-        match self {
-            &Orbit::Circular { altitude, orbital_speed, ref origin } => {
+    fn compute(&mut self, elapsed: f64) -> Option<(f64, f64)> {
+        match *self {
+            Orbit::Circular { altitude, orbital_speed, ref mut angle, ref origin } => {
+                *angle = (*angle - orbital_speed / 1000.0 * elapsed) % (2.0 * PI);
                 let (x, y) = origin.borrow().position();
-                Some((x + altitude * f64::cos(orbital_speed * elapsed),
-                      y + altitude * f64::sin(orbital_speed * elapsed)))
+                Some((x + altitude * angle.cos(), y + altitude * angle.sin()))
             }
-            &Orbit::Fixed => None,
+            Orbit::Fixed => None,
+        }
+    }
+
+    fn max_altitude(&self) -> Option<f64> {
+        match *self {
+            Orbit::Circular { altitude, .. } => Some(altitude),
+            Orbit::Fixed => None,
         }
     }
 }
@@ -80,19 +94,25 @@ pub struct Object {
     visuals: ObjectVisuals,
 }
 
+pub type ObjectHandle = Rc<RefCell<Object>>;
+
+pub fn new_handle(object: Object) -> ObjectHandle {
+    Rc::new(RefCell::new(object))
+}
+
 impl Object {
     pub fn new(object_type: ObjectType,
                position: (f64, f64),
                orbit: Orbit,
                visuals: ObjectVisuals)
-               -> Rc<RefCell<Object>> {
-        Rc::new(RefCell::new(Object {
+               -> ObjectHandle {
+        new_handle(Object {
             object_type: object_type,
             position: position,
             orbit: orbit,
             time_alive: 0.0,
             visuals: visuals,
-        }))
+        })
     }
 
     pub fn update(&mut self, dt: f64) {
@@ -108,5 +128,9 @@ impl Object {
 
     pub fn visuals(&self) -> &ObjectVisuals {
         &self.visuals
+    }
+
+    pub fn orbit(&self) -> &Orbiting {
+        &self.orbit
     }
 }

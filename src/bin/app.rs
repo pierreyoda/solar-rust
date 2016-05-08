@@ -1,3 +1,4 @@
+use rand::StdRng;
 use piston_window::*;
 
 use solar_rustlib::core;
@@ -10,14 +11,16 @@ impl SolarRustApp {
         SolarRustApp
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Result<(), String> {
         let mut window: PistonWindow = WindowSettings::new("solar-rust", [640, 480])
                                            .exit_on_esc(false)
                                            .samples(4) // anti-aliasing
                                            .build()
                                            .unwrap();
+        window = window.ups(60).max_fps(60);
 
-        let mut system = core::system::System::test();
+        let mut rng = try!(StdRng::new().map_err(|e| format!("{:?}", e)));
+        let mut system = try!(core::system::System::test(&mut rng));
         let mut system_renderer = SystemRenderer::new();
         system_renderer.update_cache(&system);
 
@@ -31,7 +34,8 @@ impl SolarRustApp {
                     system_renderer.render(&system, c, g);
                 });
             }
-
         }
+
+        Ok(())
     }
 }

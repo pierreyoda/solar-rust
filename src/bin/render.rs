@@ -59,7 +59,6 @@ impl SystemRenderer {
                                      color[1] as f32 / 255.0,
                                      color[2] as f32 / 255.0,
                                      color[3] as f32 / 255.0];
-                println!("{:?}", ellipse_color);
                 let ellipse = Ellipse::new_border(CIRCLE_BORDER_COLOR, CIRCLE_BORDER_RADIUS)
                                   .color(ellipse_color);
                 let half_radius = radius / 2.0;
