@@ -36,7 +36,7 @@ pub enum Orbit {
         orbital_speed: f64,
         /// Current angle of the orbit, in radians.
         angle: f64,
-        origin: Rc<RefCell<Object>>,
+        origin: SObjectHandle,
     },
     /// "Fixed" orbit : the object will never move from its initial position.
     /// Useful for stars.
@@ -66,12 +66,15 @@ impl<'o> Orbiting for Orbit {
 pub type Color = [u8; 4];
 
 /// Describes how an 'Object' should be represented in-game.
+/// Only defines very crude guidelines, advanced representation must be defined
+/// game-side.
 #[derive(Clone, Debug)]
 pub enum ObjectVisuals {
     Circle {
         radius: f64,
         color: Color,
     },
+    Custom,
 }
 
 impl ObjectVisuals {
@@ -83,9 +86,19 @@ impl ObjectVisuals {
     }
 }
 
+pub trait Object {
+    /// Get the object center's current position.
+    fn position(&self) -> (f64, f64);
+    /// Get the object's chosen representation.
+    fn visuals(&self) -> &ObjectVisuals;
+
+    /// Update the object state.
+    fn update(&mut self, dt: f64);
+}
+
 /// An orbital object.
 #[derive(Clone, Debug)]
-pub struct Object {
+pub struct SingleObject {
     object_type: ObjectType,
     position: (f64, f64),
     orbit: Orbit,
@@ -95,18 +108,25 @@ pub struct Object {
 }
 
 pub type ObjectHandle = Rc<RefCell<Object>>;
+pub type SObjectHandle = Rc<RefCell<SingleObject>>;
 
-pub fn new_handle(object: Object) -> ObjectHandle {
+pub fn new_handle(object: SingleObject) -> ObjectHandle {
     Rc::new(RefCell::new(object))
 }
+pub fn new_single_handle(object: SingleObject) -> SObjectHandle {
+    Rc::new(RefCell::new(object))
+}
+pub fn from_single(handle: SObjectHandle) -> ObjectHandle {
+    handle as Rc<RefCell<Object>>
+}
 
-impl Object {
+impl SingleObject {
     pub fn new(object_type: ObjectType,
                position: (f64, f64),
                orbit: Orbit,
                visuals: ObjectVisuals)
-               -> ObjectHandle {
-        new_handle(Object {
+               -> SObjectHandle {
+        new_single_handle(SingleObject {
             object_type: object_type,
             position: position,
             orbit: orbit,
@@ -115,22 +135,28 @@ impl Object {
         })
     }
 
-    pub fn update(&mut self, dt: f64) {
+    pub fn position(&self) -> (f64, f64) {
+        self.position
+    }
+
+    pub fn orbit(&self) -> &Orbiting {
+        &self.orbit
+    }
+}
+
+impl Object for SingleObject {
+    fn position(&self) -> (f64, f64) {
+        self.position
+    }
+
+    fn update(&mut self, dt: f64) {
         self.time_alive += dt;
         if let Some(new_position) = self.orbit.compute(self.time_alive) {
             self.position = new_position;
         }
     }
 
-    pub fn position(&self) -> (f64, f64) {
-        self.position
-    }
-
-    pub fn visuals(&self) -> &ObjectVisuals {
+    fn visuals(&self) -> &ObjectVisuals {
         &self.visuals
-    }
-
-    pub fn orbit(&self) -> &Orbiting {
-        &self.orbit
     }
 }

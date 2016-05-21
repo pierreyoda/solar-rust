@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use rand::Rng;
 use rand::distributions::{Normal, Range, IndependentSample};
 
-use super::object::{Object, ObjectHandle, ObjectType, ObjectVisuals, Orbit};
+use core::object::*;
 
 /// A structure able of randomly populating a 'System' with 'Object' instances.
 pub struct ObjectsGenerator<'a, R: 'a + Rng> {
@@ -65,7 +65,7 @@ pub struct AsteroidBeltGenerator<R: Rng> {
     angle: Option<Box<Fn(&mut R) -> f64>>,
     radius: Option<Box<Fn(&mut R) -> f64>>,
     orbit_speed: Option<Box<Fn(&mut R) -> f64>>,
-    orbit_origin: Option<ObjectHandle>,
+    orbit_origin: Option<SObjectHandle>,
 }
 
 macro_rules! setter_sampler {
@@ -113,7 +113,7 @@ impl<'a, R: 'a + Rng> AsteroidBeltGenerator<R> {
     setter_sampler!(orbit_altitude, altitude);
     setter_sampler!(orbit_start_angle, angle);
     setter_sampler!(orbit_speed, orbit_speed);
-    setter!(orbit_origin, orbit_origin, ObjectHandle);
+    setter!(orbit_origin, orbit_origin, SObjectHandle);
 
     /// Initialize and/or check all necessary members (for instance: textures)
     /// for spawning the objects, then return the spawning closure.
@@ -144,13 +144,13 @@ impl<'a, R: 'a + Rng> AsteroidBeltGenerator<R> {
                 None => Orbit::Fixed,
             };
 
-            Object::new(ObjectType::Asteroid,
-                        pos,
-                        orbit,
-                        ObjectVisuals::Circle {
-                            radius: r,
-                            color: [80, 80, 40, 255],
-                        })
+            SingleObject::new(ObjectType::Asteroid,
+                              pos,
+                              orbit,
+                              ObjectVisuals::Circle {
+                                  radius: r,
+                                  color: [80, 80, 40, 255],
+                              })
         }))
     }
 }

@@ -1,4 +1,5 @@
 mod app;
+mod game;
 mod render;
 
 extern crate rand;

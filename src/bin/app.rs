@@ -2,7 +2,7 @@ use rand::StdRng;
 use piston_window::*;
 
 use solar_rustlib::core;
-use super::render::SystemRenderer;
+use game::SolarRust;
 
 pub struct SolarRustApp;
 
@@ -19,19 +19,16 @@ impl SolarRustApp {
                                            .unwrap();
         window = window.ups(60).max_fps(60);
 
-        let mut rng = try!(StdRng::new().map_err(|e| format!("{:?}", e)));
-        let mut system = try!(core::system::System::test(&mut rng));
-        let mut system_renderer = SystemRenderer::new();
-        system_renderer.update_cache(&system);
+        let mut game: SolarRust<StdRng> = try!(SolarRust::test_game());
 
         while let Some(e) = window.next() {
             if let Some(u) = e.update_args() {
-                system.update(u.dt);
+                game.update(u.dt);
             }
             if let Some(_) = e.render_args() {
                 window.draw_2d(&e, |c, g| {
                     clear([1.0; 4], g);
-                    system_renderer.render(&system, c, g);
+                    game.render(c, g);
                 });
             }
         }

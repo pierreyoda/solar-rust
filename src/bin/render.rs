@@ -6,7 +6,7 @@ use graphics::ellipse::Ellipse;
 use solar_rustlib::core::object::{Object, ObjectVisuals};
 use solar_rustlib::core::system::System;
 
-type DrawFunction = Box<Fn(Context, &mut G2d, (f64, f64))>;
+pub type DrawFunction = Box<Fn(Context, &mut G2d, (f64, f64))>;
 
 const CIRCLE_BORDER_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 const CIRCLE_BORDER_RADIUS: f64 = 1.0;
@@ -37,9 +37,8 @@ impl SystemRenderer {
         if self.system_prev_size != objects.len() as i32 {
             for (id, object) in objects {
                 if !self.cache.contains_key(id) {
-                    self.cache_object(id.clone(), &object.borrow());
+                    self.cache_object(id.clone(), &(*object.borrow()));
                 }
-                println!("caching {}", id);
             }
             self.system_prev_size = objects.len() as i32;
         }
@@ -47,9 +46,16 @@ impl SystemRenderer {
 
     pub fn render(&mut self, system: &System, c: Context, g: &mut G2d) {
         for (id, object) in system.objects() {
-            let draw_fn = self.cache.get(id).unwrap();
+            let draw_fn = match self.cache.get(id) {
+                Some(f) => f,
+                None => continue,
+            };
             draw_fn(c, g, object.borrow().position());
         }
+    }
+
+    pub fn cache_custom_object(&mut self, id: String, draw_fn: DrawFunction) {
+        self.cache.insert(id, draw_fn);
     }
 
     fn cache_object(&mut self, id: String, object: &Object) {
@@ -68,6 +74,7 @@ impl SystemRenderer {
                     ellipse.draw([x, y, radius, radius], &c.draw_state, c.transform, g);
                 })
             }
+            &ObjectVisuals::Custom => return,
         };
         self.cache.insert(id, f);
 
