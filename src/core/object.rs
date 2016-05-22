@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::f64::consts::PI;
 
 /// The different models of 'Objects' supported.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ObjectType {
     Star,
     Planet,
