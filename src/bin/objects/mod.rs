@@ -106,6 +106,7 @@ impl GameObjectBuilder {
             draw_fn: self.draw_fn.unwrap(),
             init_fn: self.init_fn.unwrap_or(Box::new(|_: &mut ObjectRegister, _: &mut Rng| {})),
             update_fn: self.update_fn
+                           .unwrap_or(Box::new(|_: &mut ObjectRegister, _: f64| {})),
             register: ObjectRegister::new(),
             time_alive: 0f64,
             position: (0.0, 0.0),

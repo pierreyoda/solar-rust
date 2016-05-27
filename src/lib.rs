@@ -1,5 +1,5 @@
 pub mod core;
 // pub mod generator;
-pub mod ui;
+pub mod util;
 
 extern crate rand;

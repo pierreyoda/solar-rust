@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 
+use solar_rustlib::util::Norm;
 use super::ObjectHandle;
 
 #[derive(Clone)]
@@ -12,6 +13,12 @@ pub enum Orbit {
         orbital_speed: f64,
         /// Current angle of the orbit, in radians.
         angle: f64,
+        origin: ObjectHandle,
+    },
+    /// "Relative" orbit : the object will always be at the specified position
+    /// relative to the origin object.
+    Relative {
+        position: (f64, f64),
         origin: ObjectHandle,
     },
     /// "Fixed" orbit : the object will never move from its specified initial
@@ -30,6 +37,10 @@ impl Orbit {
                 let (x, y) = origin.borrow().position;
                 (x + altitude * angle.cos(), y + altitude * angle.sin())
             }
+            Orbit::Relative { position, ref origin } => {
+                let (x, y) = origin.borrow().position;
+                (x + position.0, y + position.1)
+            }
             Orbit::Fixed(position) => position,
         }
     }
@@ -39,6 +50,9 @@ impl Orbit {
     fn max_altitude(&self) -> Option<f64> {
         match *self {
             Orbit::Circular { altitude, .. } => Some(altitude),
+            Orbit::Relative { position, ref origin } => {
+                Some(origin.borrow().orbit.max_altitude().unwrap_or(0.0) + position.norm())
+            }
             Orbit::Fixed(_) => None,
         }
     }
