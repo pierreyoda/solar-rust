@@ -51,6 +51,12 @@ impl GameObject {
     }
 }
 
+/// Implementing this trait by leveraging the 'GameObjectBuilder' structure
+/// allows for easier definition of a single class of objects.
+pub trait GameObjectBlueprint {
+    fn produce(&mut self) -> ObjectHandle;
+}
+
 /// Convenience structure for building 'GameObject' with sensible defaults.
 pub struct GameObjectBuilder {
     object_type: ObjectType,
@@ -75,7 +81,7 @@ impl GameObjectBuilder {
     pub fn new(object_type: ObjectType) -> Self {
         GameObjectBuilder {
             object_type: object_type,
-            draw_fn: None,
+            draw_fn: Some(draw_fn_from_visuals(&ObjectVisuals::Custom)),
             init_fn: None,
             update_fn: None,
             orbit: None,

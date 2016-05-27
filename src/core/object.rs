@@ -21,6 +21,10 @@ pub enum ObjectVisuals {
         radius: f64,
         color: Color,
     },
+    Square {
+        size: f64,
+        color: Color,
+    },
     Custom,
 }
 
@@ -28,6 +32,13 @@ impl ObjectVisuals {
     pub fn circle(radius: f64, rgb: (u8, u8, u8)) -> ObjectVisuals {
         ObjectVisuals::Circle {
             radius: radius,
+            color: [rgb.0, rgb.1, rgb.2, 255],
+        }
+    }
+
+    pub fn square(size: f64, rgb: (u8, u8, u8)) -> ObjectVisuals {
+        ObjectVisuals::Square {
+            size: size,
             color: [rgb.0, rgb.1, rgb.2, 255],
         }
     }

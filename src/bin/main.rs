@@ -1,4 +1,5 @@
 mod app;
+mod blueprints;
 mod game;
 mod objects;
 mod render;

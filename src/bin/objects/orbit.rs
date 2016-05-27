@@ -27,6 +27,15 @@ pub enum Orbit {
 }
 
 impl Orbit {
+    /// Return the relative orbit ('Orbit::Relative') corresponding to the given
+    /// relative angle and altitude.
+    pub fn new_relative_orbit(angle: f64, altitude: f64, origin: ObjectHandle) -> Orbit {
+        return Orbit::Relative {
+            position: (altitude * angle.cos(), altitude * angle.sin()),
+            origin: origin,
+        }
+    }
+
     /// Return the new coordinates of the orbiting object.
     /// - 'elapsed' is the total elapsed time for the object since its creation,
     ///   in seconds.

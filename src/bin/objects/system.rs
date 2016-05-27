@@ -1,3 +1,4 @@
+use rand::Rng;
 use piston_window::{Context, G2d};
 
 use solar_rustlib::core::{ObjectRegister, ObjectPropertyValue};
@@ -31,8 +32,15 @@ impl GameSystem {
         }
     }
 
+    /// Add the given 'GameObject' to the system, after having initialized it.
     pub fn add_object(&mut self, object: ObjectHandle) {
         self.objects.push(object);
+    }
+
+    pub fn init(&mut self, r: &mut Rng) {
+        for object_handle in &mut self.objects {
+            object_handle.borrow_mut().init(r);
+        }
     }
 
     pub fn update(&mut self, dt: f64) {
