@@ -7,6 +7,7 @@ use self::ObjectPropertyValue::*;
 pub enum ObjectPropertyValue {
     Integer(u16),
     Float(f64),
+    Text(String),
 }
 
 /// A 'GameObject' property.
@@ -93,9 +94,11 @@ impl ObjectRegister {
 
     register_get!(get_int, Integer, u16);
     register_get!(get_float, Float, f64);
+    register_get!(get_text, Text, String);
 
     register_get_mut!(get_int_mut, Integer, u16);
     register_get_mut!(get_float_mut, Float, f64);
+    register_get_mut!(get_text_mut, Text, String);
 }
 
 #[cfg(test)]
@@ -118,6 +121,13 @@ mod tests {
         let description = "Just a simple float variable".to_string();
         register.set_description("test_float".to_string(), description.clone());
         assert_eq!(register.get_description("test_float"), Some(&description));
+
+        assert_eq!(register.get_float("test_text"), None);
+        let text = "Hello World".to_string();
+        register.get_text_mut("test_text").map(|t| *t = text.clone());
+        assert_eq!(register.get_text("test_text"), Some(&text));
+        assert_eq!(register.get_int("test_text"), None);
+        assert_eq!(register.get_float("test_text"), None);
     }
 
     #[test]

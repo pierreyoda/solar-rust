@@ -65,7 +65,7 @@ pub struct AsteroidBeltGenerator<R: Rng> {
     angle: Option<Box<Fn(&mut R) -> f64>>,
     radius: Option<Box<Fn(&mut R) -> f64>>,
     orbit_speed: Option<Box<Fn(&mut R) -> f64>>,
-    orbit_origin: Option<SObjectHandle>,
+    orbit_origin: Option<ObjectHandle>,
 }
 
 macro_rules! setter_sampler {
@@ -113,7 +113,7 @@ impl<'a, R: 'a + Rng> AsteroidBeltGenerator<R> {
     setter_sampler!(orbit_altitude, altitude);
     setter_sampler!(orbit_start_angle, angle);
     setter_sampler!(orbit_speed, orbit_speed);
-    setter!(orbit_origin, orbit_origin, SObjectHandle);
+    setter!(orbit_origin, orbit_origin, ObjectHandle);
 
     /// Initialize and/or check all necessary members (for instance: textures)
     /// for spawning the objects, then return the spawning closure.
@@ -125,32 +125,33 @@ impl<'a, R: 'a + Rng> AsteroidBeltGenerator<R> {
         } else if self.orbit_speed.is_none() {
             return Err(format!("AsteroidBeltGenerator::init : orbit_speed distribution missing"));
         }
+        Err("".into())
 
-        Ok(Box::new(move |rng: &mut R| {
-            let h: f64 = sample!(self, altitude, rng);
-            let a: f64 = sample!(self, angle, rng);
-            let r: f64 = sample!(self, radius, rng);
+        // Ok(Box::new(move |rng: &mut R| {
+        // let h: f64 = sample!(self, altitude, rng);
+        // let a: f64 = sample!(self, angle, rng);
+        // let r: f64 = sample!(self, radius, rng);
 
-            let pos = (h * f64::cos(a), h * f64::sin(a));
-            let orbit = match self.orbit_origin {
-                Some(ref object) => {
-                    Orbit::Circular {
-                        altitude: h,
-                        orbital_speed: sample!(self, orbit_speed, rng),
-                        angle: a,
-                        origin: object.clone(),
-                    }
-                }
-                None => Orbit::Fixed,
-            };
+        // let pos = (h * f64::cos(a), h * f64::sin(a));
+        // let orbit = match self.orbit_origin {
+        //     Some(ref object) => {
+        //         Orbit::Circular {
+        //             altitude: h,
+        //             orbital_speed: sample!(self, orbit_speed, rng),
+        //             angle: a,
+        //             origin: object.clone(),
+        //         }
+        //     }
+        //     None => Orbit::Fixed((0.0, 0.0)),
+        // };
 
-            SingleObject::new(ObjectType::Asteroid,
-                              pos,
-                              orbit,
-                              ObjectVisuals::Circle {
-                                  radius: r,
-                                  color: [80, 80, 40, 255],
-                              })
-        }))
+        // SingleObject::new(ObjectType::Asteroid,
+        //                   pos,
+        //                   orbit,
+        //                   ObjectVisuals::Circle {
+        //                       radius: r,
+        //                       color: [80, 80, 40, 255],
+        //                   })
+        // }))
     }
 }

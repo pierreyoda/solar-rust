@@ -1,2 +1,5 @@
 pub mod object;
-pub mod system;
+mod properties;
+
+pub use self::object::{ObjectType, ObjectVisuals};
+pub use self::properties::{ObjectRegister, ObjectPropertyValue};
