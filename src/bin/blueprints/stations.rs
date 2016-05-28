@@ -26,6 +26,12 @@ impl GameObjectBlueprint for TransfertStationBlueprint {
             reg.add_property("energy_rate",
                              Float(10.0),
                              "Amount of energy produced in situ by seconds.");
+
+            reg.set_display_name("minerals", "Minerals");
+            reg.set_display_name("minerals_max", "Minerals maximum stock");
+            reg.set_display_name("energy", "Energy");
+            reg.set_display_name("energy_max", "Energy maximum stock");
+            reg.set_display_name("energy_rate", "Energy production rate");
         });
 
         let update_fn = Box::new(|reg: &mut ObjectRegister, dt: f64| {
@@ -43,7 +49,6 @@ impl GameObjectBlueprint for TransfertStationBlueprint {
                 if *v > energy_max {
                     *v = energy_max
                 }
-                println!("{:?}", *v);
             });
         });
 

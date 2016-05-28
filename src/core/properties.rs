@@ -1,3 +1,4 @@
+use std::fmt;
 use std::collections::HashMap;
 
 use self::ObjectPropertyValue::*;
@@ -10,12 +11,28 @@ pub enum ObjectPropertyValue {
     Text(String),
 }
 
+impl fmt::Display for ObjectPropertyValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::ObjectPropertyValue::*;
+
+        let precision = f.precision().unwrap_or(3);
+        match self {
+            &Integer(v) => write!(f, "{}", v),
+            &Float(v) => write!(f, "{:.*}", precision, v),
+            &Text(ref v) => write!(f, "{}", v),
+        }
+    }
+}
+
 /// A 'GameObject' property.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ObjectProperty {
     value: ObjectPropertyValue,
     description: String,
     mutable: bool,
+    /// An optional display name that if specified will be used in-game instead
+    /// of the register's associated key.
+    display_name: Option<String>,
 }
 
 /// Each 'GameObject' owns such a register for easier storage and access of
@@ -72,6 +89,7 @@ impl ObjectRegister {
                                    value: value,
                                    description: desc.into(),
                                    mutable: false,
+                                   display_name: None,
                                });
     }
 
@@ -81,6 +99,7 @@ impl ObjectRegister {
                                    value: value,
                                    description: desc.into(),
                                    mutable: true,
+                                   display_name: None,
                                });
     }
 
@@ -92,6 +111,27 @@ impl ObjectRegister {
         self.properties.get_mut(&key.into()).map(|property| property.description = desc.into());
     }
 
+    /// Return None if there is no property associated with the given key or if
+    /// the property exists but does not specify a display name.
+    /// Return Some(property_display_name) otherwise.
+    pub fn get_display_name<S: Into<String>>(&self, key: S) -> Option<&String> {
+        match self.properties.get(&key.into()) {
+            None => None,
+            Some(property) => {
+                match property.display_name {
+                    None => None,
+                    Some(ref string) => Some(string),
+                }
+            }
+        }
+    }
+
+    pub fn set_display_name<S: Into<String>>(&mut self, key: S, name: S) {
+        self.properties
+            .get_mut(&key.into())
+            .map(|property| property.display_name = Some(name.into()));
+    }
+
     register_get!(get_int, Integer, u16);
     register_get!(get_float, Float, f64);
     register_get!(get_text, Text, String);
@@ -99,6 +139,24 @@ impl ObjectRegister {
     register_get_mut!(get_int_mut, Integer, u16);
     register_get_mut!(get_float_mut, Float, f64);
     register_get_mut!(get_text_mut, Text, String);
+}
+
+impl fmt::Display for ObjectRegister {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut string = String::new();
+        for (key, property) in &self.properties {
+            let r = write!(f,
+                           "- {name} : {value}\n\tmutable = {mutable}\n\t{description}\n",
+                           name = property.display_name.as_ref().unwrap_or(key),
+                           value = property.value,
+                           mutable = property.mutable,
+                           description = property.description);
+            try!(r);
+            // string.push_str(&property.display_name.as_ref().unwrap_or(key)[..]);
+            // string.push_str(format!(""))
+        }
+        write!(f, "{}", "\n")
+    }
 }
 
 #[cfg(test)]
@@ -128,6 +186,12 @@ mod tests {
         assert_eq!(register.get_text("test_text"), Some(&text));
         assert_eq!(register.get_int("test_text"), None);
         assert_eq!(register.get_float("test_text"), None);
+
+        assert_eq!(register.get_display_name("property_does_not_exist"), None);
+        assert_eq!(register.get_display_name("test_int"), None);
+        let display_name = "Test integer".to_string();
+        register.set_display_name("test_int", &display_name[..]);
+        assert_eq!(register.get_display_name("test_int"), Some(&display_name));
     }
 
     #[test]
