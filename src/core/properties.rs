@@ -11,6 +11,12 @@ pub enum ObjectPropertyValue {
     Text(String),
 }
 
+impl ObjectPropertyValue {
+    pub fn text(text: &str) -> ObjectPropertyValue {
+        ObjectPropertyValue::Text(text.to_string())
+    }
+}
+
 impl fmt::Display for ObjectPropertyValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ObjectPropertyValue::*;
@@ -143,7 +149,7 @@ impl ObjectRegister {
 
 impl fmt::Display for ObjectRegister {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut string = String::new();
+        try!(write!(f, "Object register :\n"));
         for (key, property) in &self.properties {
             let r = write!(f,
                            "- {name} : {value}\n\tmutable = {mutable}\n\t{description}\n",
@@ -152,8 +158,6 @@ impl fmt::Display for ObjectRegister {
                            mutable = property.mutable,
                            description = property.description);
             try!(r);
-            // string.push_str(&property.display_name.as_ref().unwrap_or(key)[..]);
-            // string.push_str(format!(""))
         }
         write!(f, "{}", "\n")
     }
