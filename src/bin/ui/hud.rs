@@ -137,7 +137,7 @@ impl<T> Widget for ResourceWidget<T>
             None => "#NA!".into(),
         };
         Text::new(&label[..])
-            .mid_right_of(rectangle_idx)
+            .middle_of(rectangle_idx)
             .graphics_for(idx)
             .color(color)
             .font_size(font_size)
