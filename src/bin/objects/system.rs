@@ -51,7 +51,7 @@ impl GameSystem {
 
     pub fn render(&mut self, c: Context, g: &mut G2d) {
         for object_handle in &mut self.objects {
-            object_handle.borrow_mut().draw(c, g);
+            object_handle.borrow_mut().render(c, g);
         }
     }
 }

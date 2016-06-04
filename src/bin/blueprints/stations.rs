@@ -3,36 +3,48 @@ use rand::Rng;
 use solar_rustlib::core::*;
 use objects::*;
 
-pub struct TransfertStationBlueprint;
+pub struct TransfertStationBlueprint {
+    orbit: Orbit,
+}
+
+impl TransfertStationBlueprint {
+    pub fn orbit(mut self, orbit: Orbit) -> Self {
+        self.orbit = orbit;
+        self
+    }
+}
 
 impl GameObjectBlueprint for TransfertStationBlueprint {
-    fn produce(&mut self) -> ObjectHandle {
+    fn default() -> Self {
+        TransfertStationBlueprint { orbit: Orbit::Fixed((0.0, 0.0)) }
+    }
+
+    fn produce<R: Rng>(&mut self, _: &mut R) -> ObjectHandle {
         use solar_rustlib::core::ObjectPropertyValue::*;
 
-        let init_fn = Box::new(|reg: &mut ObjectRegister, _: &mut Rng| {
-            reg.add_property("level", Integer(1), "Current level.");
+        let mut reg = ObjectRegister::new();
+        reg.add_property("level", Integer(1), "Current level.");
 
-            reg.add_property("minerals",
-                             Float(0.0),
-                             "Current amount of minerals in stock.");
-            reg.add_property("minerals_max",
-                             Float(1000.0),
-                             "Maximum amount of minerals that can be stored.");
+        reg.add_property("minerals",
+                         Float(0.0),
+                         "Current amount of minerals in stock.");
+        reg.add_property("minerals_max",
+                         Float(1000.0),
+                         "Maximum amount of minerals that can be stored.");
 
-            reg.add_property("energy", Float(0.0), "Current amount of energy in stock.");
-            reg.add_property("energy_max",
-                             Float(1000.0),
-                             "Maximum amount of energy that can be stored.");
-            reg.add_property("energy_rate",
-                             Float(10.0),
-                             "Amount of energy produced in situ by seconds.");
+        reg.add_property("energy", Float(0.0), "Current amount of energy in stock.");
+        reg.add_property("energy_max",
+                         Float(1000.0),
+                         "Maximum amount of energy that can be stored.");
+        reg.add_property("energy_rate",
+                         Float(10.0),
+                         "Amount of energy produced in situ by seconds.");
 
-            reg.set_display_name("minerals", "Minerals");
-            reg.set_display_name("minerals_max", "Minerals maximum stock");
-            reg.set_display_name("energy", "Energy");
-            reg.set_display_name("energy_max", "Energy maximum stock");
-            reg.set_display_name("energy_rate", "Energy production rate");
-        });
+        reg.set_display_name("minerals", "Minerals");
+        reg.set_display_name("minerals_max", "Minerals maximum stock");
+        reg.set_display_name("energy", "Energy");
+        reg.set_display_name("energy_max", "Energy maximum stock");
+        reg.set_display_name("energy_rate", "Energy production rate");
 
         let update_fn = Box::new(|reg: &mut ObjectRegister, dt: f64| {
             let minerals_max = reg.get_float("minerals_max").unwrap().clone();
@@ -52,9 +64,10 @@ impl GameObjectBlueprint for TransfertStationBlueprint {
             });
         });
 
-        GameObjectBuilder::with_visuals(ObjectType::Station,
-                                        ObjectVisuals::square(10.0, (100, 200, 200)))
-            .init_fn(init_fn)
+        DefaultObjectBuilder::with_visuals(ObjectType::Station,
+                                           ObjectVisuals::square(10.0, (100, 200, 200)))
+            .orbit(self.orbit.clone())
+            .register(reg)
             .update_fn(update_fn)
             .build()
     }
