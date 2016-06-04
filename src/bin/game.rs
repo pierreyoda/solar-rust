@@ -1,48 +1,166 @@
 use rand::{Rng, StdRng};
-use piston_window::{Context, G2d};
+use piston_window::*;
 
-use solar_rustlib::core::{ObjectType, ObjectVisuals};
+use solar_rustlib::core::{ObjectType, ObjectVisuals, ObjectPropertyValue};
 // use solar_rustlib::generator::{ObjectsGenerator, AsteroidBeltGenerator, Distribution};
+use app::UiCell;
+use ui::ResourceWidget;
+use textures::{TextureStore, TextureHandle};
 
 use objects::*;
+
+const UI_BAR_HEIGHT_FACTOR: f64 = 1.0 / 10.0;
+const UI_MAIN_HEIGHT_FACTOR: f64 = 1.0 - 2.0 * UI_BAR_HEIGHT_FACTOR;
 
 /// Main structure for the solar-rust game proper.
 pub struct SolarRust<R: Rng> {
     /// Random number generator used by the game (generation, simulation...).
     rng: R,
     system: GameSystem,
+    display_width: f64,
+    display_height: f64,
+    gameview_width: f64,
+    gameview_height: f64,
+    texture_store: TextureStore,
+    texture_icon_minerals: TextureHandle,
+    texture_icon_energy: TextureHandle,
+    object_home: ObjectHandle,
 }
 
 impl<R: Rng> SolarRust<R> {
+    pub fn on_display_resize(&mut self, display_size: Size) {
+        let (w, h) = (display_size.width as f64, display_size.height as f64);
+        self.display_width = w;
+        self.display_height = h;
+        self.gameview_width = w * UI_MAIN_HEIGHT_FACTOR;
+        self.gameview_height = h * UI_MAIN_HEIGHT_FACTOR;
+    }
+
     pub fn update(&mut self, dt: f64) {
         self.system.update(dt);
     }
 
+    pub fn update_ui(&mut self, ui: &mut UiCell) {
+        use conrod::*;
+
+        widget_ids!(
+            MASTER,
+            SECTION_TOP,
+            SECTION_MAIN,
+            SECTION_BOTTOM,
+            TITLE,
+            RESOURCES_MINERALS,
+            RESOURCES_ENERGY,
+        );
+
+        // Master canvas :
+        // /------------------\
+        // |   TOP UI BAR     |
+        // |      ----        |
+        // |                  |
+        // |      MAIN        |
+        // |                  |
+        // |      ----        |
+        // |  BOTTOM UI BAR   |
+        // \------------------/
+        let bar_height = self.display_height * UI_BAR_HEIGHT_FACTOR;
+        let middle_height = self.display_height * UI_MAIN_HEIGHT_FACTOR;
+        Canvas::new()
+            .color(color::TRANSPARENT)
+            .frame_color(color::TRANSPARENT)
+            .flow_down(&[(SECTION_TOP,
+                          Canvas::new()
+                              .color(color::CHARCOAL)
+                              .length(bar_height)),
+                         (SECTION_MAIN,
+                          Canvas::new()
+                              .color(color::TRANSPARENT)
+                              .frame_color(color::TRANSPARENT)
+                              .length(middle_height)),
+                         (SECTION_BOTTOM,
+                          Canvas::new()
+                              .color(color::CHARCOAL)
+                              .length(bar_height))])
+            .pad(0.0)
+            .set(MASTER, ui);
+
+        const TITLE_TEXT: &'static str = "SolarRust alpha-dev";
+        Text::new(TITLE_TEXT)
+            .color(color::WHITE)
+            .middle_of(SECTION_TOP)
+            .set(TITLE, ui);
+        let home_object_reg = &self.object_home.borrow().register;
+        ResourceWidget::from_logo(self.texture_icon_minerals.clone())
+            .mid_left_of(SECTION_TOP)
+            .frame(0.0)
+            .color(color::TRANSPARENT)
+            .with_amount(*home_object_reg.get_float("minerals").unwrap())
+            .set(RESOURCES_MINERALS, ui);
+        ResourceWidget::from_logo(self.texture_icon_energy.clone())
+            .mid_right_of(SECTION_TOP)
+            .frame(0.0)
+            .color(color::TRANSPARENT)
+            .with_amount(*home_object_reg.get_float("energy").unwrap())
+            .set(RESOURCES_ENERGY, ui);
+    }
+
     pub fn render(&mut self, c: Context, g: &mut G2d) {
+        // use graphics::rectangle::Rectangle;
+
+        // TODO better aspect ratio handling
+        let f = self.gameview_height / self.display_height;
+        let c = Context::new_abs(self.gameview_width / f, self.gameview_height / f);
+        let x = (self.display_width - self.gameview_width) / 2.0;
+        let c = c.trans(x, self.display_height * UI_BAR_HEIGHT_FACTOR)
+                 .trans(self.gameview_width / 2.0, self.gameview_height / 2.0);
+
+        // Rectangle::new([1.0, 0.0, 0.0, 0.6])
+        //     .draw([0.0, 0.0, self.gameview_width, self.gameview_height],
+        //           &c.draw_state,
+        //           c.transform,
+        //           g); // debug background
+
         self.system.render(c, g);
     }
 }
 
 impl SolarRust<StdRng> {
-    pub fn test_game() -> Result<SolarRust<StdRng>, String> {
+    pub fn test_game(textures: TextureStore,
+                     display_size: Size)
+                     -> Result<SolarRust<StdRng>, String> {
+        assert_eq!(2.0 * UI_BAR_HEIGHT_FACTOR + UI_MAIN_HEIGHT_FACTOR, 1.0);
+
         let mut rng = try!(StdRng::new().map_err(|e| format!("{:?}", e)));
-        let mut system = try!(test_system(&mut rng));
+        let (mut system, home) = try!(test_system(&mut rng));
         system.init(&mut rng);
+
+        let texture_icon_minerals = textures.get("minerals_icon.png");
+        let texture_icon_energy = textures.get("energy_icon.png");
+
+        let (w, h) = (display_size.width as f64, display_size.height as f64);
         Ok(SolarRust {
             rng: rng,
             system: system,
+            display_width: w,
+            display_height: h,
+            gameview_width: w * UI_MAIN_HEIGHT_FACTOR,
+            gameview_height: h * UI_MAIN_HEIGHT_FACTOR,
+            texture_store: textures,
+            texture_icon_minerals: texture_icon_energy,
+            texture_icon_energy: texture_icon_minerals,
+            object_home: home,
         })
     }
 }
 
-fn test_system<R: 'static + Rng>(rng: &mut R) -> Result<GameSystem, String> {
+fn test_system<R: 'static + Rng>(rng: &mut R) -> Result<(GameSystem, ObjectHandle), String> {
     use blueprints::TransfertStationBlueprint;
 
     let mut system = GameSystem::new("Test system");
 
     let sun = GameObjectBuilder::with_visuals(ObjectType::Star,
                                               ObjectVisuals::circle(75.0, (255, 255, 0)))
-                  .orbit(Orbit::Fixed((300.0, 225.0)))
+                  .orbit(Orbit::Fixed((0.0, 0.0)))
                   .build();
     let planet1 = GameObjectBuilder::with_visuals(ObjectType::Planet,
                                                   ObjectVisuals::circle(40.0, (40, 15, 180)))
@@ -64,12 +182,17 @@ fn test_system<R: 'static + Rng>(rng: &mut R) -> Result<GameSystem, String> {
                     .build();
 
     let station1 = TransfertStationBlueprint.produce();
-    station1.borrow_mut().orbit = Orbit::new_relative_orbit(60f64.to_radians(), 40.0, planet1.clone());
+    station1.borrow_mut().orbit = Orbit::new_relative_orbit(60f64.to_radians(),
+                                                            40.0,
+                                                            planet1.clone());
+    station1.borrow_mut()
+            .register
+            .add_constant("name", ObjectPropertyValue::text("Station One"), "");
 
     system.add_object(sun);
     system.add_object(planet1);
     system.add_object(moon1);
-    system.add_object(station1);
+    system.add_object(station1.clone());
 
     // let spawn_fn = try!(AsteroidBeltGenerator::new()
     //                         .radius(Distribution::Normal {
@@ -85,5 +208,5 @@ fn test_system<R: 'static + Rng>(rng: &mut R) -> Result<GameSystem, String> {
     //                         .spawn_function());
     // system = try!(system.generate_objects("asteroid_belt_1", spawn_fn, rng, 25));
 
-    Ok(system)
+    Ok((system, station1))
 }

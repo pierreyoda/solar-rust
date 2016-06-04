@@ -5,7 +5,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use rand::Rng;
-use piston_window::{Context, G2d};
+// use graphics::Transform;
+use piston_window::{Context, G2d, Transformed};
 
 use solar_rustlib::core::{ObjectType, ObjectVisuals, ObjectRegister};
 use render::draw_fn_from_visuals;
@@ -15,7 +16,7 @@ pub use self::orbit::Orbit;
 pub use self::system::GameSystem;
 
 pub type ObjectHandle = Rc<RefCell<GameObject>>;
-pub type ObjectDrawFunction = Box<Fn(Context, &mut G2d, (f64, f64), &mut ObjectRegister)>;
+pub type ObjectDrawFunction = Box<Fn(Context, &mut G2d, &mut ObjectRegister)>;
 pub type ObjectInitFunction = Box<Fn(&mut ObjectRegister, &mut Rng)>;
 pub type ObjectUpdateFunction = Box<Fn(&mut ObjectRegister, f64)>;
 
@@ -47,7 +48,9 @@ impl GameObject {
     }
 
     pub fn draw(&mut self, c: Context, g: &mut G2d) {
-        (self.draw_fn)(c, g, self.position, &mut self.register)
+        (self.draw_fn)(c.trans(self.position.0, self.position.1),
+                       g,
+                       &mut self.register);
     }
 }
 

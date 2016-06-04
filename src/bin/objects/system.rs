@@ -1,7 +1,7 @@
 use rand::Rng;
 use piston_window::{Context, G2d};
 
-use solar_rustlib::core::{ObjectRegister, ObjectPropertyValue};
+use solar_rustlib::core::ObjectRegister;
 use super::ObjectHandle;
 
 /// The game structure representing a gravitationally bound solar system, owning

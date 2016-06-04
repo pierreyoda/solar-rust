@@ -1,6 +1,7 @@
 target
 screens
 Cargo.lock
+assets_src
 
 solar-rust.sublime-project
 *.sublime-workspace
