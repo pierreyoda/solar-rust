@@ -40,6 +40,10 @@ impl TextureStore {
             }
             if let Some(ext) = filepath.extension() {
                 if ext == "png" {
+                    let texture = Texture::from_path(&mut window.factory,
+                                                     &filepath,
+                                                     Flip::None,
+                                                     &TextureSettings::new())
                                       .ok()
                                       .expect(&format!("failed to load the texture : {}",
                                                        filepath.display()));
