@@ -1,25 +1,24 @@
 use rand::Rng;
 
-use solar_rustlib::core::*;
+use solar_rustlib::core::{ObjectRegister, ObjectType, ObjectVisuals};
+#[macro_use]
+use solar_rustlib::util::*;
 use objects::*;
 
 pub struct TransfertStationBlueprint {
-    orbit: Orbit,
+    orbit: Option<Orbit>,
 }
 
 impl TransfertStationBlueprint {
-    pub fn orbit(mut self, orbit: Orbit) -> Self {
-        self.orbit = orbit;
-        self
+    pub fn new() -> TransfertStationBlueprint {
+        TransfertStationBlueprint { orbit: None }
     }
+
+    builder_setters!(options => { orbit { orbit: Orbit } }; others => {});
 }
 
-impl GameObjectBlueprint for TransfertStationBlueprint {
-    fn default() -> Self {
-        TransfertStationBlueprint { orbit: Orbit::Fixed((0.0, 0.0)) }
-    }
-
-    fn produce<R: Rng>(&mut self, _: &mut R) -> ObjectHandle {
+impl<R: Rng> GameObjectBlueprint<R> for TransfertStationBlueprint {
+    fn produce(&mut self, _: &mut R) -> Result<ObjectHandle, String> {
         use solar_rustlib::core::ObjectPropertyValue::*;
 
         let mut reg = ObjectRegister::new();
@@ -64,11 +63,12 @@ impl GameObjectBlueprint for TransfertStationBlueprint {
             });
         });
 
-        DefaultObjectBuilder::with_visuals(ObjectType::Station,
-                                           ObjectVisuals::square(10.0, (100, 200, 200)))
-            .orbit(self.orbit.clone())
-            .register(reg)
-            .update_fn(update_fn)
-            .build()
+        let orbit = self.orbit.as_ref().unwrap_or(&Orbit::Fixed((0.0, 0.0))).clone();
+        Ok(DefaultObjectBuilder::with_visuals(ObjectType::Station,
+                                              ObjectVisuals::square(10.0, (100, 200, 200)))
+               .orbit(orbit)
+               .register(reg)
+               .update_fn(update_fn)
+               .build())
     }
 }

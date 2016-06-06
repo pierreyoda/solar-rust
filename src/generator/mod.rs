@@ -1,32 +1,22 @@
-use std::f64::consts::PI;
-
 use rand::Rng;
 use rand::distributions::{Normal, Range, IndependentSample};
 
-use core::object::*;
+pub type SamplerFunction<T, R> = Box<Fn(&mut R) -> T>;
 
-/// A structure able of randomly populating a 'System' with 'Object' instances.
-pub struct ObjectsGenerator<'a, R: 'a + Rng> {
-    fun: Box<Fn(&mut R) -> ObjectHandle>,
-    rng: &'a mut R,
-}
+/// Randomly generate instances of a certain type.
+pub trait TypeGenerator<R: Rng> {
+    type Generated;
 
-impl<'a, R: 'a + Rng> ObjectsGenerator<'a, R> {
-    pub fn new(spawner_fn: Box<Fn(&mut R) -> ObjectHandle>,
-               rng: &'a mut R)
-               -> ObjectsGenerator<'a, R> {
-        ObjectsGenerator {
-            fun: spawner_fn,
-            rng: rng,
+    fn default() -> Self;
+
+    fn generate(&mut self, rng: &mut R) -> Result<Self::Generated, String>;
+
+    fn generate_many(&mut self, rng: &mut R, n: usize) -> Result<Vec<Self::Generated>, String> {
+        let mut generated = Vec::with_capacity(n);
+        for _ in 0..n {
+            generated.push(try!(self.generate(rng)));
         }
-    }
-}
-
-impl<'a, R: 'a + Rng> Iterator for ObjectsGenerator<'a, R> {
-    type Item = ObjectHandle;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some((self.fun)(self.rng))
+        Ok(generated)
     }
 }
 
@@ -45,7 +35,7 @@ pub enum Distribution {
 
 impl Distribution {
     /// Create from the specifications the rand-crate based distribution samplers.
-    pub fn to_sampler<R: Rng>(&self) -> Box<Fn(&mut R) -> f64> {
+    pub fn to_sampler<R: Rng>(&self) -> SamplerFunction<f64, R> {
         match self {
             &Distribution::Constant(value) => Box::new(move |_| value),
             &Distribution::Normal { mean, std_dev } => {
@@ -60,98 +50,50 @@ impl Distribution {
     }
 }
 
-pub struct AsteroidBeltGenerator<R: Rng> {
-    altitude: Option<Box<Fn(&mut R) -> f64>>,
-    angle: Option<Box<Fn(&mut R) -> f64>>,
-    radius: Option<Box<Fn(&mut R) -> f64>>,
-    orbit_speed: Option<Box<Fn(&mut R) -> f64>>,
-    orbit_origin: Option<ObjectHandle>,
+impl<R: Rng> Into<SamplerFunction<f64, R>> for Distribution {
+    fn into(self) -> SamplerFunction<f64, R> {
+        self.to_sampler()
+    }
 }
 
-macro_rules! setter_sampler {
-    ($setter_name: ident, $property_name: ident) => (
-        #[allow(dead_code)]
-        pub fn $setter_name(mut self, $property_name: Distribution)
-            -> AsteroidBeltGenerator<R> {
-            self.$property_name = Some($property_name.to_sampler()); self
+/// Generates random RGB colors, with each component having a value between 0.0 and 1.0.
+pub struct ColorGenerator<R: Rng> {
+    pub r: SamplerFunction<f64, R>,
+    pub g: SamplerFunction<f64, R>,
+    pub b: SamplerFunction<f64, R>,
+}
+
+impl<R: Rng> TypeGenerator<R> for ColorGenerator<R> {
+    type Generated = [f32; 4];
+
+    fn default() -> Self {
+        ColorGenerator {
+            r: Distribution::Range {
+                   low: 0.0,
+                   high: 1.0,
+               }
+               .into(),
+            g: Distribution::Range {
+                   low: 0.0,
+                   high: 1.0,
+               }
+               .into(),
+            b: Distribution::Range {
+                   low: 0.0,
+                   high: 1.0,
+               }
+               .into(),
         }
-    )
+    }
+
+    fn generate(&mut self, rng: &mut R) -> Result<Self::Generated, String> {
+        Ok([(self.r)(rng) as f32, (self.g)(rng) as f32, (self.b)(rng) as f32, 1.0])
+    }
 }
 
-macro_rules! setter {
-    ($setter_name: ident, $property_name: ident, $property_type: ty) => (
-        #[allow(dead_code)]
-        pub fn $setter_name(mut self, $property_name: $property_type)
-            -> AsteroidBeltGenerator<R> {
-                self.$property_name = Some($property_name); self
-            }
-    )
-}
-
-macro_rules! sample {
-    ($self_:ident, $sampler_opt_fn: ident, $rng: ident) => (
+#[macro_export]
+macro_rules! generator_sample {
+    ($self_: ident, $sampler_opt_fn: ident, $rng: ident) => (
         ($self_.$sampler_opt_fn.as_ref().unwrap())($rng)
     )
-}
-
-impl<'a, R: 'a + Rng> AsteroidBeltGenerator<R> {
-    pub fn new() -> AsteroidBeltGenerator<R> {
-        AsteroidBeltGenerator {
-            altitude: None,
-            angle: Some(Distribution::Range {
-                            low: 0.0,
-                            high: 2.0 * PI,
-                        }
-                        .to_sampler()),
-            radius: None,
-            orbit_speed: None,
-            orbit_origin: None,
-        }
-    }
-
-    setter_sampler!(radius, radius);
-    setter_sampler!(orbit_altitude, altitude);
-    setter_sampler!(orbit_start_angle, angle);
-    setter_sampler!(orbit_speed, orbit_speed);
-    setter!(orbit_origin, orbit_origin, ObjectHandle);
-
-    /// Initialize and/or check all necessary members (for instance: textures)
-    /// for spawning the objects, then return the spawning closure.
-    pub fn spawn_function(self) -> Result<Box<Fn(&mut R) -> ObjectHandle + 'a>, String> {
-        if self.altitude.is_none() {
-            return Err(format!("AsteroidBeltGenerator::init : altitude distribution missing"));
-        } else if self.angle.is_none() {
-            return Err(format!("AsteroidBeltGenerator::init : angle distribution missing"));
-        } else if self.orbit_speed.is_none() {
-            return Err(format!("AsteroidBeltGenerator::init : orbit_speed distribution missing"));
-        }
-        Err("".into())
-
-        // Ok(Box::new(move |rng: &mut R| {
-        // let h: f64 = sample!(self, altitude, rng);
-        // let a: f64 = sample!(self, angle, rng);
-        // let r: f64 = sample!(self, radius, rng);
-
-        // let pos = (h * f64::cos(a), h * f64::sin(a));
-        // let orbit = match self.orbit_origin {
-        //     Some(ref object) => {
-        //         Orbit::Circular {
-        //             altitude: h,
-        //             orbital_speed: sample!(self, orbit_speed, rng),
-        //             angle: a,
-        //             origin: object.clone(),
-        //         }
-        //     }
-        //     None => Orbit::Fixed((0.0, 0.0)),
-        // };
-
-        // SingleObject::new(ObjectType::Asteroid,
-        //                   pos,
-        //                   orbit,
-        //                   ObjectVisuals::Circle {
-        //                       radius: r,
-        //                       color: [80, 80, 40, 255],
-        //                   })
-        // }))
-    }
 }

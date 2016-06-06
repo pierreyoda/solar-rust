@@ -1,6 +1,5 @@
 use std::f64::consts::PI;
 
-use solar_rustlib::util::Norm;
 use super::ObjectHandle;
 
 #[derive(Clone)]

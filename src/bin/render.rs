@@ -9,13 +9,12 @@ const CIRCLE_BORDER_RADIUS: f64 = 1.0;
 const SQUARE_BORDER_COLOR: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 const SQUARE_BORDER_RADIUS: f64 = 1.0;
 
-fn processed_color(color: Color) -> types::Color {
+pub fn processed_color(color: Color) -> types::Color {
     [color[0] as f32 / 255.0,
      color[1] as f32 / 255.0,
      color[2] as f32 / 255.0,
      color[3] as f32 / 255.0]
 }
-
 
 /// Build the function responsible for displaying the simple representation
 /// described by the given 'ObjectVisuals' parameter.

@@ -1,3 +1,4 @@
+mod belt;
 mod orbit;
 mod system;
 
@@ -13,6 +14,7 @@ use solar_rustlib::util::Vector2f;
 use render::draw_fn_from_visuals;
 pub use self::orbit::Orbit;
 pub use self::system::GameSystem;
+pub use self::belt::{AsteroidBeltBlueprint, AsteroidGenerator};
 
 
 pub type ObjectHandle = Rc<RefCell<GameObject>>;
@@ -88,11 +90,9 @@ impl GameObject for DefaultObject {
 
 /// Implementing this trait allows for easier definition of a class of similar
 /// object instances.
-pub trait GameObjectBlueprint {
-    /// Create and return a new default blueprint.
-    fn default() -> Self;
-    /// Initialize a new object according to the blueprint specifications.
-    fn produce<R: Rng>(&mut self, rng: &mut R) -> ObjectHandle;
+pub trait GameObjectBlueprint<R: Rng> {
+    /// Try and initialize a new object according to the blueprint specifications.
+    fn produce(&mut self, rng: &mut R) -> Result<ObjectHandle, String>;
 }
 
 /// Convenience structure for building any 'DefaultObject' with sensible defaults.

@@ -1,5 +1,5 @@
 pub mod core;
-// pub mod generator;
-pub mod util;
+#[macro_use] pub mod generator;
+#[macro_use] pub mod util;
 
 extern crate rand;
