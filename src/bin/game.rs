@@ -2,7 +2,7 @@ use rand::{Rng, StdRng};
 use piston_window::*;
 
 use solar_rustlib::core::{ObjectType, ObjectVisuals, ObjectPropertyValue};
-// use solar_rustlib::generator::{ObjectsGenerator, AsteroidBeltGenerator, Distribution};
+use solar_rustlib::generator::{TypeGenerator, Distribution};
 use app::UiCell;
 use ui::ResourceWidget;
 use textures::{TextureStore, TextureHandle};
@@ -89,18 +89,22 @@ impl<R: Rng> SolarRust<R> {
             .color(color::WHITE)
             .middle_of(SECTION_TOP)
             .set(TITLE, ui);
-        let home_object_reg = &self.object_home.borrow().register;
+
+        let object_home = self.object_home.borrow();
+        let home_object_reg = object_home.register();
         ResourceWidget::from_logo(self.texture_icon_minerals.clone())
             .mid_left_of(SECTION_TOP)
             .frame(0.0)
             .color(color::TRANSPARENT)
-            .with_amount(*home_object_reg.get_float("minerals").unwrap())
+            .with_amount(*home_object_reg.get_float("minerals")
+                                         .expect("ResourceWidget : no minerals in target object"))
             .set(RESOURCES_MINERALS, ui);
         ResourceWidget::from_logo(self.texture_icon_energy.clone())
             .mid_right_of(SECTION_TOP)
             .frame(0.0)
             .color(color::TRANSPARENT)
-            .with_amount(*home_object_reg.get_float("energy").unwrap())
+            .with_amount(*home_object_reg.get_float("energy")
+                                         .expect("ResourceWidget : no energy in target object"))
             .set(RESOURCES_ENERGY, ui);
     }
 
@@ -158,21 +162,21 @@ fn test_system<R: 'static + Rng>(rng: &mut R) -> Result<(GameSystem, ObjectHandl
 
     let mut system = GameSystem::new("Test system");
 
-    let sun = GameObjectBuilder::with_visuals(ObjectType::Star,
-                                              ObjectVisuals::circle(75.0, (255, 255, 0)))
+    let sun = DefaultObjectBuilder::with_visuals(ObjectType::Star,
+                                                 ObjectVisuals::circle(75.0, (255, 255, 0)))
                   .orbit(Orbit::Fixed((0.0, 0.0)))
                   .build();
-    let planet1 = GameObjectBuilder::with_visuals(ObjectType::Planet,
-                                                  ObjectVisuals::circle(40.0, (40, 15, 180)))
+    let planet1 = DefaultObjectBuilder::with_visuals(ObjectType::Planet,
+                                                     ObjectVisuals::circle(40.0, (40, 15, 180)))
                       .orbit(Orbit::Circular {
-                          altitude: 175.0,
+                          altitude: 125.0,
                           orbital_speed: 0.1,
                           angle: 0f64.to_radians(),
                           origin: sun.clone(),
                       })
                       .build();
-    let moon1 = GameObjectBuilder::with_visuals(ObjectType::Moon,
-                                                ObjectVisuals::circle(10.0, (200, 0, 150)))
+    let moon1 = DefaultObjectBuilder::with_visuals(ObjectType::Moon,
+                                                   ObjectVisuals::circle(10.0, (200, 0, 150)))
                     .orbit(Orbit::Circular {
                         altitude: 50.0,
                         orbital_speed: 0.3,
@@ -181,32 +185,40 @@ fn test_system<R: 'static + Rng>(rng: &mut R) -> Result<(GameSystem, ObjectHandl
                     })
                     .build();
 
-    let station1 = TransfertStationBlueprint.produce();
-    station1.borrow_mut().orbit = Orbit::new_relative_orbit(60f64.to_radians(),
-                                                            40.0,
-                                                            planet1.clone());
+    let station1 = try!(TransfertStationBlueprint::new()
+                            .orbit(Orbit::new_relative_orbit(60f64.to_radians(),
+                                                             40.0,
+                                                             planet1.clone()))
+                            .produce(rng));
     station1.borrow_mut()
-            .register
+            .register_mut()
             .add_constant("name", ObjectPropertyValue::text("Station One"), "");
+
+    let mut asteroid_belt_blueprint = AsteroidBeltBlueprint::<R>::new()
+                                          .asteroids_number(35)
+                                          .generator(AsteroidGenerator::default()
+                                                         .radius(Distribution::Normal {
+                                                                     mean: 10.0,
+                                                                     std_dev: 5.0,
+                                                                 }
+                                                                 .into())
+                                                         .altitude(Distribution::Normal {
+                                                                       mean: 200.0,
+                                                                       std_dev: 10.0,
+                                                                   }
+                                                                   .into())
+                                                         .orbital_speed(Distribution::Normal {
+                                                                            mean: 0.2,
+                                                                            std_dev: 0.05,
+                                                                        }
+                                                                        .into()));
+    let asteroid_belt = try!(asteroid_belt_blueprint.produce(rng));
 
     system.add_object(sun);
     system.add_object(planet1);
     system.add_object(moon1);
     system.add_object(station1.clone());
-
-    // let spawn_fn = try!(AsteroidBeltGenerator::new()
-    //                         .radius(Distribution::Normal {
-    //                             mean: 10.0,
-    //                             std_dev: 2.0,
-    //                         })
-    //                         .orbit_altitude(Distribution::Normal {
-    //                             mean: 200.0,
-    //                             std_dev: 5.0,
-    //                         })
-    //                         .orbit_speed(Distribution::Constant(0.1))
-    //                         .orbit_origin(sun)
-    //                         .spawn_function());
-    // system = try!(system.generate_objects("asteroid_belt_1", spawn_fn, rng, 25));
+    system.add_object(asteroid_belt);
 
     Ok((system, station1))
 }

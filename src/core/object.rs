@@ -25,7 +25,6 @@ pub enum ObjectVisuals {
         size: f64,
         color: Color,
     },
-    Custom,
 }
 
 impl ObjectVisuals {

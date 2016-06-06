@@ -12,7 +12,7 @@ extern crate piston_window;
 extern crate graphics;
 #[macro_use] extern crate conrod;
 
-extern crate solar_rustlib;
+#[macro_use] extern crate solar_rustlib;
 
 fn main() {
     match app::SolarRustApp::new().run() {
