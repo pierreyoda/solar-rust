@@ -1,44 +1,33 @@
-/// The different models of 'Objects' supported.
-#[derive(Clone, Debug, PartialEq)]
-pub enum ObjectType {
-    Star,
-    Planet,
-    Moon,
-    Asteroid,
-    Station,
-    Satellite,
-}
+use specs;
 
-/// A color encoded as 4 8-bit RGBA channels.
-pub type Color = [u8; 4];
+/// A color encoded as normalized RGBA channels.
+pub type Color = [f32; 4];
 
-/// Describes how an 'Object' should be represented in-game.
-/// Only defines very crude guidelines, advanced representation must be defined
-/// game-side.
 #[derive(Clone, Debug)]
-pub enum ObjectVisuals {
-    Circle {
-        radius: f64,
-        color: Color,
-    },
-    Square {
-        size: f64,
-        color: Color,
-    },
+pub struct DrawCircleComponent {
+    pub color: Color,
+    pub radius: f32,
 }
 
-impl ObjectVisuals {
-    pub fn circle(radius: f64, rgb: (u8, u8, u8)) -> ObjectVisuals {
-        ObjectVisuals::Circle {
-            radius: radius,
-            color: [rgb.0, rgb.1, rgb.2, 255],
-        }
-    }
+impl specs::Component for DrawCircleComponent {
+    type Storage = specs::VecStorage<DrawCircleComponent>;
+}
 
-    pub fn square(size: f64, rgb: (u8, u8, u8)) -> ObjectVisuals {
-        ObjectVisuals::Square {
-            size: size,
-            color: [rgb.0, rgb.1, rgb.2, 255],
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct DrawRectangleComponent {
+    pub color: Color,
+    pub width: f32,
+    pub height: f32,
+}
+
+impl specs::Component for DrawRectangleComponent {
+    type Storage = specs::VecStorage<DrawRectangleComponent>;
+}
+
+pub struct ArtificialObjectComponent {
+    name: String,
+}
+
+impl specs::Component for ArtificialObjectComponent {
+    type Storage = specs::HashMapStorage<ArtificialObjectComponent>;
 }

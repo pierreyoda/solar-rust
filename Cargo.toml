@@ -12,9 +12,10 @@ name = "solar-rust"
 path = "src/bin/main.rs"
 
 [dependencies]
+log = "0.3.7"
 rand = "0.3.15"
+cgmath = "0.12.0"
 specs = "0.8.1"
-gfx_device_gl = "*"
-piston_window = "0.48.0"
-piston2d-graphics = "0.16.0"
-conrod = "0.35.0"
+# binary dependencies
+piston_window = "0.64.0"
+# conrod = "0.51.1"

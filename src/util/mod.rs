@@ -1,7 +1,3 @@
-mod math;
-
-pub use self::math::{Vector, Vector2f};
-
 /// Generate the builder setter methods for any parameter.
 #[macro_export]
 macro_rules! builder_setters {

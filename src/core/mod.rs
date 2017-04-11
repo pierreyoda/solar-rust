@@ -1,5 +1,12 @@
-pub mod object;
-mod properties;
+use cgmath::{Point2, Rad, Vector2};
 
-pub use self::object::{ObjectType, ObjectVisuals, Color};
-pub use self::properties::{ObjectRegister, ObjectPropertyValue};
+mod object;
+mod world;
+
+pub type FloatPrecision = f32;
+pub type Point2f = Point2<FloatPrecision>;
+pub type Vector2f = Vector2<FloatPrecision>;
+pub type RadF = Rad<FloatPrecision>;
+
+pub use self::object::{DrawCircleComponent, DrawRectangleComponent};
+pub use self::world::{SpatialComponent, InertialComponent};

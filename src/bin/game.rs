@@ -1,7 +1,8 @@
 use rand::{Rng, StdRng};
 use piston_window::*;
+use specs;
 
-use solar_rustlib::core::{ObjectType, ObjectVisuals, ObjectPropertyValue};
+use solar_rustlib::core::{, ObjectVisuals, ObjectPropertyValue};
 use solar_rustlib::generator::{TypeGenerator, Distribution};
 use app::UiCell;
 use ui::ResourceWidget;
@@ -16,6 +17,8 @@ const UI_MAIN_HEIGHT_FACTOR: f64 = 1.0 - 2.0 * UI_BAR_HEIGHT_FACTOR;
 pub struct SolarRust<R: Rng> {
     /// Random number generator used by the game (generation, simulation...).
     rng: R,
+    /// The world containing all our entities and their associated components.
+    world: ,
     system: GameSystem,
     display_width: f64,
     display_height: f64,
