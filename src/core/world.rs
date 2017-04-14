@@ -1,5 +1,5 @@
 use specs;
-use super::{FloatPrecision, Point2f, RadF, Vector2f};
+use super::{Point2f, RadF, Vector2f};
 
 #[derive(Clone, Debug)]
 pub struct SpatialComponent {

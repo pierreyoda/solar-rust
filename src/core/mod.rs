@@ -8,5 +8,5 @@ pub type Point2f = Point2<FloatPrecision>;
 pub type Vector2f = Vector2<FloatPrecision>;
 pub type RadF = Rad<FloatPrecision>;
 
-pub use self::object::{DrawCircleComponent, DrawRectangleComponent};
+pub use self::object::{DrawCircleComponent, DrawRectangleComponent, ArtificialObjectComponent};
 pub use self::world::{SpatialComponent, InertialComponent};

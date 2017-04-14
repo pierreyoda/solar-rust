@@ -24,10 +24,11 @@ impl specs::Component for DrawRectangleComponent {
     type Storage = specs::VecStorage<DrawRectangleComponent>;
 }
 
+/// An artificial object, built by mankind (a mining station for instance).
 pub struct ArtificialObjectComponent {
-    name: String,
+    pub name: String,
 }
 
 impl specs::Component for ArtificialObjectComponent {
-    type Storage = specs::HashMapStorage<ArtificialObjectComponent>;
+    type Storage = specs::VecStorage<ArtificialObjectComponent>;
 }

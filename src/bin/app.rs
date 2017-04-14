@@ -1,4 +1,5 @@
 use piston_window::*;
+use super::game;
 
 pub struct SolarRustApp;
 
@@ -23,10 +24,13 @@ impl SolarRustApp {
                                            .unwrap();
         window = window.ups(60).max_fps(60);
 
+        // Initialize the game state
+        let mut game = try!(game::SolarRust::init());
+
         // Game main loop
         while let Some(event) = window.next() {
             window.draw_2d(&event, |context, graphics| {
-                clear([1.0, 1.0, 1.0, 1.0], graphics);
+                clear([0.0, 0.0, 0.0, 1.0], graphics);
             });
         }
 
