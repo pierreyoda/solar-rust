@@ -1,22 +1,32 @@
+use na;
 use specs;
-use super::{Point2f, RadF, Vector2f};
+use super::Iso2;
 
 #[derive(Clone, Debug)]
 pub struct SpatialComponent {
-    pub position: Point2f,
-    pub angle: RadF,
+    /// The 2D transformation (translation & rotation) relative to the
+    /// entity's parent.
+    local_transform: Iso2,
+    /// The entity's transformation is defined relative to this entity if not None.
+    parent_entity: Option<specs::Entity>,
 }
 
 impl specs::Component for SpatialComponent {
     type Storage = specs::VecStorage<SpatialComponent>;
 }
 
-#[derive(Clone, Debug)]
-pub struct InertialComponent {
-    pub velocity: Vector2f,
-    pub angular_velocity: RadF,
-}
+impl SpatialComponent {
+    pub fn new(transform: Iso2, parent: specs::Entity) -> SpatialComponent {
+        SpatialComponent {
+            local_transform: transform,
+            parent_entity: Some(parent),
+        }
+    }
 
-impl specs::Component for InertialComponent {
-    type Storage = specs::VecStorage<InertialComponent>;
+    pub fn new_root(transform: Iso2) -> SpatialComponent {
+        SpatialComponent {
+            local_transform: Iso2::one(),
+            parent_entity: None,
+        }
+    }
 }

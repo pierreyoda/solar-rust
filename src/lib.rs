@@ -3,5 +3,5 @@ pub mod core;
 #[macro_use] pub mod util;
 
 extern crate rand;
-extern crate cgmath;
+extern crate nalgebra as na;
 extern crate specs;

@@ -1,12 +1,14 @@
-use cgmath::{Point2, Rad, Vector2};
+use na;
 
 mod object;
 mod world;
 
 pub type FloatPrecision = f32;
-pub type Point2f = Point2<FloatPrecision>;
-pub type Vector2f = Vector2<FloatPrecision>;
-pub type RadF = Rad<FloatPrecision>;
+pub type Pt2 = na::Point2<FloatPrecision>;
+pub type Vec2 = na::Vector2<FloatPrecision>;
+pub type Iso2 = na::Isometry2<FloatPrecision>;
 
-pub use self::object::{DrawCircleComponent, DrawRectangleComponent, ArtificialObjectComponent};
-pub use self::world::{SpatialComponent, InertialComponent};
+pub type TimeDelta = f64;
+
+pub use self::object::{ArtificialObjectComponent};
+pub use self::world::{SpatialComponent};

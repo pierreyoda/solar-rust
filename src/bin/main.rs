@@ -8,9 +8,10 @@ mod ui;
 
 #[macro_use] extern crate log;
 extern crate rand;
-extern crate cgmath;
+extern crate nalgebra as na;
 extern crate specs;
-extern crate piston_window;
+extern crate gfx_window_glutin;
+extern crate glutin;
 #[macro_use] extern crate solar_rustlib;
 
 fn main() {

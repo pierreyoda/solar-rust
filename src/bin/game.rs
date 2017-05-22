@@ -1,5 +1,4 @@
 use rand::{Rng, StdRng};
-use cgmath::Rad;
 use specs;
 use piston_window::*;
 use solar_rustlib::core::*;
@@ -35,14 +34,7 @@ impl SolarRust<StdRng> {
 fn generate_test_system<R: Rng>(r: &mut R, w: &mut specs::World) -> Result<(), String> {
     // Sun creation
     w.create_now()
-        .with(SpatialComponent {
-                  position: Point2f::new(0.0, 0.0),
-                  angle: Rad(0.0),
-              })
-        .with(DrawCircleComponent {
-                  color: [1.0, 1.0, 0.0, 1.0],
-                  radius: 75.0,
-              });
+        .with(SpatialComponent::new_root())
 
     Ok(())
 }

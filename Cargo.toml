@@ -14,8 +14,10 @@ path = "src/bin/main.rs"
 [dependencies]
 log = "0.3.7"
 rand = "0.3.15"
-cgmath = "0.12.0"
+nalgebra = "0.11.2"
 specs = "0.8.1"
 # binary dependencies
-piston_window = "0.64.0"
+gfx = "0.14.1"
+gfx_window_glutin = "0.14.0"
+glutin = "0.7.4"
 # conrod = "0.51.1"
